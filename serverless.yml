@@ -9,6 +9,3 @@ provider:
 functions:
   cpas-jwt-token-verifier:
     handler: index.handler
-    events:
-      - http: ANY /
-      - http: 'ANY {proxy+}'

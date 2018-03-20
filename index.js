@@ -38,7 +38,7 @@ exports.handler = function (event, context, callback) {
         console.log(decoded.user.username);
         console.log(decoded.user.scopes);
 
-        var principalId = user.username;
+        var principalId = decoded.user.username;
 
         // if the token is valid, a policy must be generated which will allow or deny access to the client
 

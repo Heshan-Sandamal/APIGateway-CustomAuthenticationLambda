@@ -30,7 +30,7 @@ exports.handler = function (event, context, callback) {
 
     var decoded;
     try {
-        decoded = jwt.verify(token, 'cpas');
+        decoded = jwt.verify(token, 'secretkey');
 
         console.log(decoded.iat);
         console.log(decoded.exp);

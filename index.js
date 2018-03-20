@@ -16,6 +16,7 @@ exports.handler = function (event, context, callback) {
     console.log('Client token: ' + event.authorizationToken);
     console.log('Method ARN: ' + event.methodArn);
 
+    //get the token
     var token = event.authorizationToken;
     token = token.replace("Bearer ", "");
 
@@ -34,14 +35,10 @@ exports.handler = function (event, context, callback) {
         console.log(decoded.iat);
         console.log(decoded.exp);
         console.log(decoded.iss);
-        console.log(decoded.username);
+        console.log(decoded.user.username);
+        console.log(decoded.user.scopes);
 
-
-        // var principalId ='user|a1b2c3d4';
-        var principalId = decoded.username;
-
-        // you can send a 401 Unauthorized response to the client by failing like so:
-        // callback("Unauthorized", null);
+        var principalId = user.username;
 
         // if the token is valid, a policy must be generated which will allow or deny access to the client
 
@@ -69,11 +66,20 @@ exports.handler = function (event, context, callback) {
         // and will apply to subsequent calls to any method/resource in the RestApi
         // made with the same token
 
+
         // the example policy below denies access to all resources in the RestApi
         var policy = new AuthPolicy(principalId, awsAccountId, apiOptions);
         // policy.denyAllMethods();
-        policy.allowAllMethods();
-        // policy.allowMethod(AuthPolicy.HttpVerb.GET, "/home");
+        // policy.allowAllMethods();
+
+        var scope=decoded.user.scopes;
+        if(isInArray('admin',scope)){
+            policy.allowMethod(AuthPolicy.HttpVerb.GET, "/agreement/*");
+            policy.allowMethod(AuthPolicy.HttpVerb.GET, "/home");
+        }else if(isInArray('user',scope)){
+            policy.allowMethod(AuthPolicy.HttpVerb.GET, "/home");
+        }
+
 
         // finally, build the policy
         var authResponse = policy.build();
@@ -84,7 +90,7 @@ exports.handler = function (event, context, callback) {
         authResponse.context = {
             key: 'value', // $context.authorizer.key -> value
             number: 1,
-            bool: true
+            bool: true,
         };
         // authResponse.context.arr = ['foo']; <- this is invalid, APIGW will not accept it
         // authResponse.context.obj = {'foo':'bar'}; <- also invalid
@@ -92,9 +98,17 @@ exports.handler = function (event, context, callback) {
         callback(null, authResponse);
 
     } catch (err) {
+        // you can send a 401 Unauthorized response to the client by failing like so:
+        // context.error.messageString="Unauthorized to access cpas resources"
         callback("Unauthorized", null);
+
     }
 };
+
+function isInArray(value, array) {
+    return array.indexOf(value) > -1;
+}
+
 
 /**
  * AuthPolicy receives a set of allowed and denied methods and generates a valid
